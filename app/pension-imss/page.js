@@ -163,6 +163,19 @@ export default function PensionIMSS() {
   const [semanasDirectas, setSemanasDirectas] = useState("");
   // modo periodos
   const [periodos, setPeriodos] = useState([{ inicio: "", fin: "" }]);
+
+  // Autocompletar primer periodo cuando cambia fechaPrimeraCot o modo
+  useEffect(() => {
+    if (modoSemanas === "periodos" && fechaPrimeraCot) {
+      setPeriodos(prev => {
+        const copy = [...prev];
+        if (!copy[0].inicio) {
+          copy[0] = { ...copy[0], inicio: fechaPrimeraCot };
+        }
+        return copy;
+      });
+    }
+  }, [modoSemanas, fechaPrimeraCot]);
   // régimen 97 extra
   const [saldoAfore, setSaldoAfore] = useState("");
   // resultado
@@ -410,6 +423,11 @@ export default function PensionIMSS() {
                   <div>
                     {i === 0 && <Label>Inicio</Label>}
                     <input type="date" value={p.inicio} onChange={e => updatePeriodo(i, "inicio", e.target.value)} style={inp} />
+                    {i === 0 && p.inicio === fechaPrimeraCot && fechaPrimeraCot && (
+                      <p style={{ fontSize: 11, color: "#1847f0", margin: "3px 0 0", fontWeight: 600 }}>
+                        ✓ Autocompletado de tu primera cotización
+                      </p>
+                    )}
                   </div>
                   <div>
                     {i === 0 && <Label>Fin</Label>}
