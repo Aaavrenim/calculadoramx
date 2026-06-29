@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 export const metadata = {
   title: "Artículos legales y laborales en México | CalculadoraMX",
   description: "Guías gratuitas sobre finiquito, pensión alimenticia, IMSS y herencias en México. Basadas en la ley mexicana vigente.",
@@ -47,11 +48,7 @@ export default function Blog() {
               <div style={{
                 background: "#fff", border: "1.5px solid #e8eaff", borderRadius: 16,
                 padding: "20px 22px", display: "flex", gap: 16, alignItems: "flex-start",
-                transition: "box-shadow 0.2s, border-color 0.2s, transform 0.2s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(24,71,240,0.12)"; e.currentTarget.style.borderColor = "#c7d4ff"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#e8eaff"; e.currentTarget.style.transform = "translateY(0)"; }}
-              >
+              }}>
                 <span style={{ fontSize: 28, flexShrink: 0 }}>{a.emoji}</span>
                 <div style={{ flex: 1 }}>
                   <span style={{ display: "inline-block", background: `${a.color}15`, color: a.color, fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100, marginBottom: 8, letterSpacing: 0.4 }}>
@@ -66,7 +63,7 @@ export default function Blog() {
           ))}
         </div>
 
-        <div style={{ borderTop: "1px solid #e0e4ff", marginTop: 48, paddingTop: 24, display: "flex", gap: 20 }}>
+        <div style={{ borderTop: "1px solid #e0e4ff", marginTop: 48, paddingTop: 24 }}>
           <a href="/" style={{ fontSize: 13, color: "#1847f0", fontWeight: 600, textDecoration: "none" }}>← Volver al inicio</a>
         </div>
       </div>
