@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
 
-/* ─── TOOLTIP ─── */
 function Tip({ text }) {
   const [open, setOpen] = useState(false);
   return (
@@ -35,8 +34,8 @@ function Label({ children, tip }) {
 }
 
 const inp = {
-  width: "100%", padding: "12px 14px", borderRadius: 10,
-  border: "1.5px solid #dde0ff", fontSize: 15, outline: "none",
+  width: "100%", padding: "11px 14px", borderRadius: 10,
+  border: "1.5px solid #dde0ff", fontSize: 14, outline: "none",
   background: "#fafbff", color: "#0a0f1e", boxSizing: "border-box", fontFamily: "inherit",
 };
 
@@ -128,6 +127,15 @@ function tiempoEstimado(tipo, numHerederos) {
 function pesos(n) { return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n); }
 function fmt(n) { return `${n.toFixed(1)}%`; }
 
+const CATEGORIAS_BIENES = [
+  { k: "inmuebles",   e: "🏠", l: "Inmuebles",         tip: "Casas, departamentos, terrenos, locales comerciales. Usa el valor catastral o el precio de mercado aproximado." },
+  { k: "cuentas",     e: "🏦", l: "Cuentas bancarias", tip: "Saldo total en cuentas de cheques, ahorro, nómina u otras cuentas bancarias." },
+  { k: "vehiculos",   e: "🚗", l: "Vehículos",         tip: "Autos, camionetas, motocicletas u otros vehículos. Usa el valor de mercado actual." },
+  { k: "inversiones", e: "📈", l: "Inversiones",       tip: "Acciones, fondos de inversión, CETES, AFORE, seguros de vida con valor en efectivo, etc." },
+  { k: "negocios",    e: "🏢", l: "Negocios",          tip: "Valor de participación en empresas, negocios propios o sociedades." },
+  { k: "otros",       e: "📦", l: "Otros bienes",      tip: "Joyas, arte, maquinaria, derechos, créditos a favor, y cualquier otro bien de valor." },
+];
+
 const DEUDAS_SI = [
   { e: "🏠", n: "Hipoteca", d: "El inmueble se hereda con la deuda pendiente. El heredero puede pagar, refinanciar o vender." },
   { e: "💳", n: "Créditos bancarios o personales", d: "Se pagan del patrimonio antes de repartir. Los herederos no responden con su propio dinero." },
@@ -143,7 +151,7 @@ const DEUDAS_NO = [
 
 export default function Herencias() {
   const [tipo, setTipo] = useState("");
-  const [bienes, setBienes] = useState("");
+  const [bienesDetalle, setBienesDetalle] = useState({ inmuebles: "", cuentas: "", vehiculos: "", inversiones: "", negocios: "", otros: "" });
   const [deudas, setDeudas] = useState("");
   const [mostrarDeudas, setMostrarDeudas] = useState(false);
   const [familia, setFamilia] = useState({ hijos: 0, nietos: 0, conyuge: false, padres: 0, abuelos: 0, hermanos: 0, sobrinos: 0, tios: 0, concubino: false });
@@ -152,6 +160,8 @@ export default function Herencias() {
   const [error, setError] = useState("");
   const resultRef = useRef(null);
 
+  const bienes = Object.values(bienesDetalle).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  function updBien(k, v) { setBienesDetalle(p => ({ ...p, [k]: v })); }
   function updFam(k, v) { setFamilia(p => ({ ...p, [k]: v })); }
   function addLeg() { setLegatarios([...legatarios, { nombre: "", pct: "" }]); }
   function remLeg(i) { setLegatarios(legatarios.filter((_, j) => j !== i)); }
@@ -159,15 +169,15 @@ export default function Herencias() {
 
   function calcular() {
     setError(""); setResultado(null);
-    const b = parseFloat(bienes), d = parseFloat(deudas) || 0;
+    const d = parseFloat(deudas) || 0;
     if (!tipo) return setError("Selecciona si hay testamento o no.");
-    if (!b || b <= 0) return setError("Ingresa el valor total de los bienes.");
+    if (bienes <= 0) return setError("Ingresa el valor de al menos un bien.");
     let res;
     if (tipo === "intestamentaria") {
-      res = calcularIntestataria({ bienes: b, deudas: d, familia });
+      res = calcularIntestataria({ bienes, deudas: d, familia });
       res.tipo = "intestamentaria";
     } else {
-      const r = calcularTestamentaria({ bienes: b, deudas: d, legatarios });
+      const r = calcularTestamentaria({ bienes, deudas: d, legatarios });
       if (Math.abs(r.totalPct - 100) > 0.01) return setError(`Los porcentajes deben sumar 100%. Actualmente suman ${r.totalPct.toFixed(1)}%.`);
       res = { ...r, tipo: "testamentaria", explicacion: "La herencia se reparte según lo establecido en el testamento (Art. 1295 CCF).", grado: "Testamentaria" };
     }
@@ -212,7 +222,7 @@ export default function Herencias() {
             <span style={{ background: "#1847f0", color: "#fff", borderRadius: "50%", width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900 }}>1</span>
             ¿Hay testamento?
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
             {[["intestamentaria", "❌ Sin testamento", "El notario o juez determina quién hereda según el Código Civil Federal."], ["testamentaria", "✅ Con testamento", "El fallecido dejó por escrito cómo repartir sus bienes ante notario."]].map(([v, t, d]) => (
               <button key={v} onClick={() => setTipo(v)} style={{ background: tipo === v ? "#f0f4ff" : "#fafbff", border: `2px solid ${tipo === v ? "#1847f0" : "#e0e4ff"}`, borderRadius: 14, padding: "16px", cursor: "pointer", textAlign: "left" }}>
                 <p style={{ margin: "0 0 4px", fontWeight: 800, fontSize: 15, color: tipo === v ? "#1847f0" : "#0a0f1e" }}>{t}</p>
@@ -221,21 +231,40 @@ export default function Herencias() {
             ))}
           </div>
 
-          {/* 2 — BIENES */}
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#0a0f1e", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
+          {/* 2 — BIENES POR CATEGORÍA */}
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#0a0f1e", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ background: "#1847f0", color: "#fff", borderRadius: "50%", width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900 }}>2</span>
-            Valor total de los bienes
-            <Tip text="Suma el valor aproximado de todo lo que dejó el fallecido: inmuebles, cuentas bancarias, vehículos, inversiones, negocios, etc." />
+            Bienes del fallecido
           </h2>
-          <div style={{ marginBottom: 8 }}>
-            <Label>Valor total del patrimonio</Label>
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#888", fontWeight: 600 }}>$</span>
-              <input type="number" placeholder="Ej. 2500000" value={bienes} onChange={e => setBienes(e.target.value)} style={{ ...inp, paddingLeft: 28 }} min="0" />
+          <p style={{ fontSize: 12, color: "#777", marginBottom: 16 }}>Llena solo los que aplican. El total se calcula automáticamente.</p>
+
+          <div style={{ background: "#f8f9ff", borderRadius: 14, padding: "16px", marginBottom: 8 }}>
+            {CATEGORIAS_BIENES.map(({ k, e, l, tip }) => (
+              <div key={k} style={{ display: "grid", gridTemplateColumns: "32px 1fr auto", gap: 10, alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 20, textAlign: "center" }}>{e}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: "#0a0f1e" }}>{l}</span>
+                  <Tip text={tip} />
+                </div>
+                <div style={{ position: "relative", width: 170 }}>
+                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#aaa", fontSize: 13, fontWeight: 600 }}>$</span>
+                  <input
+                    type="number" placeholder="0" min="0" value={bienesDetalle[k]}
+                    onChange={e => updBien(k, e.target.value)}
+                    style={{ ...inp, paddingLeft: 22, width: "100%", fontSize: 13 }}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* TOTAL */}
+            <div style={{ borderTop: "1.5px solid #dde0ff", marginTop: 8, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 800, fontSize: 14, color: "#0a0f1e" }}>Total del patrimonio</span>
+              <span style={{ fontWeight: 900, fontSize: 18, color: bienes > 0 ? "#1847f0" : "#aaa" }}>{bienes > 0 ? pesos(bienes) : "$0"}</span>
             </div>
-            {bienes && <p style={{ fontSize: 12, color: "#555", marginTop: 4 }}>= {pesos(parseFloat(bienes) || 0)}</p>}
           </div>
 
+          {/* DEUDAS */}
           <button onClick={() => setMostrarDeudas(!mostrarDeudas)} style={{ background: "none", border: "none", color: "#1847f0", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "8px 0", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
             {mostrarDeudas ? "▲ Ocultar" : "▼ Agregar"} deudas del fallecido
           </button>
@@ -261,82 +290,116 @@ export default function Herencias() {
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#888", fontWeight: 600 }}>$</span>
                 <input type="number" placeholder="Ej. 400000" value={deudas} onChange={e => setDeudas(e.target.value)} style={{ ...inp, paddingLeft: 28 }} min="0" />
               </div>
-              {bienes && deudas && (
+              {bienes > 0 && deudas && (
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#1847f0", marginTop: 8 }}>
-                  Masa hereditaria neta: {pesos(Math.max(0, parseFloat(bienes) - parseFloat(deudas)))}
+                  Masa hereditaria neta: {pesos(Math.max(0, bienes - parseFloat(deudas)))}
                 </p>
               )}
             </div>
           )}
 
-          {/* 3 — FAMILIA o TESTAMENTO */}
-          {tipo === "intestamentaria" && (
-            <>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: "#0a0f1e", margin: "8px 0 6px", display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ background: "#1847f0", color: "#fff", borderRadius: "50%", width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900 }}>3</span>
-                Familia del fallecido
-                <Tip text="El Código Civil Federal establece un orden estricto: los herederos de mayor grado excluyen a los de menor. Llena solo los familiares vivos al momento del fallecimiento." />
-              </h2>
-              <p style={{ fontSize: 12, color: "#777", marginBottom: 16 }}>Los de mayor jerarquía excluyen a los de menor. Llena solo los que había vivos.</p>
+          {/* 3 — FAMILIA */}
+          {tipo === "intestamentaria" && (() => {
+            const hayDescendientes = familia.hijos > 0 || familia.nietos > 0;
+            const hayAscendientes = familia.padres > 0 || familia.abuelos > 0;
+            const hayColaterales = familia.hermanos > 0 || familia.sobrinos > 0 || familia.tios > 0;
+            const mostrarAscendientes = !hayDescendientes;
+            const mostrarAbuelos = mostrarAscendientes && familia.padres === 0;
+            const mostrarColaterales = !hayDescendientes && !hayAscendientes && !familia.conyuge;
+            const mostrarConcubino = !hayDescendientes && !hayAscendientes && !familia.conyuge && !hayColaterales;
+            return (
+              <>
+                <h2 style={{ fontSize: 16, fontWeight: 800, color: "#0a0f1e", margin: "8px 0 6px", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ background: "#1847f0", color: "#fff", borderRadius: "50%", width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900 }}>3</span>
+                  Familia del fallecido
+                  <Tip text="El CCF establece un orden estricto: los herederos de mayor grado excluyen a los de menor. El formulario se adapta automáticamente según lo que vayas llenando." />
+                </h2>
+                <p style={{ fontSize: 12, color: "#777", marginBottom: 16 }}>El formulario se adapta solo — solo verás las secciones que aplican según lo que vayas llenando.</p>
 
-              {[
-                { titulo: "👶 Descendientes (1° prioridad)", campos: [
-                  { k: "hijos", l: "Hijos vivos", tip: "Hijos directos del fallecido, vivos al momento del deceso.", max: 20 },
-                  { k: "nietos", l: "Nietos (si algún hijo murió)", tip: "Solo cuentan si el hijo correspondiente también falleció (derecho de representación, Art. 1609 CCF).", max: 30 },
-                ]},
-                { titulo: "👴 Ascendientes (2° prioridad — si no hay hijos)", campos: [
-                  { k: "padres", l: "Padres vivos", tip: "Padre y/o madre del fallecido, vivos al momento del deceso.", max: 2 },
-                  { k: "abuelos", l: "Abuelos vivos", tip: "Solo heredan si los padres también fallecieron.", max: 4 },
-                ]},
-              ].map(({ titulo, campos }) => (
-                <div key={titulo} style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
-                  <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>{titulo}</p>
+                {/* DESCENDIENTES — siempre visible */}
+                <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+                  <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>👶 Descendientes (1° prioridad)</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    {campos.map(({ k, l, tip, max }) => (
-                      <div key={k}>
-                        <Label tip={tip}>{l}</Label>
-                        <input type="number" min="0" max={max} value={familia[k]} onChange={e => updFam(k, parseInt(e.target.value) || 0)} style={inp} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
-                <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>💍 Cónyuge</p>
-                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <input type="checkbox" checked={familia.conyuge} onChange={e => updFam("conyuge", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#1847f0", cursor: "pointer" }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#0a0f1e" }}>Había cónyuge al momento del fallecimiento</span>
-                  <Tip text="El cónyuge concurre con hijos (recibe parte igual a un hijo) y con ascendientes (recibe 50%). Sin descendientes ni ascendientes, hereda todo." />
-                </label>
-              </div>
-
-              <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
-                <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>👥 Colaterales (3° prioridad — si no hay descendientes, ascendientes ni cónyuge)</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                  {[
-                    { k: "hermanos", l: "Hermanos", tip: "Tienen prioridad sobre sobrinos y tíos.", max: 20 },
-                    { k: "sobrinos", l: "Sobrinos", tip: "Hijos de hermanos fallecidos. Heredan por representación si el hermano murió.", max: 30 },
-                    { k: "tios", l: "Tíos", tip: "Hermanos de los padres del fallecido. Son el último grado de colaterales reconocido.", max: 20 },
-                  ].map(({ k, l, tip, max }) => (
-                    <div key={k}>
-                      <Label tip={tip}>{l}</Label>
-                      <input type="number" min="0" max={max} value={familia[k]} onChange={e => updFam(k, parseInt(e.target.value) || 0)} style={inp} />
+                    <div>
+                      <Label tip="Hijos directos del fallecido, vivos al momento del deceso.">Hijos vivos</Label>
+                      <input type="number" min="0" max="20" value={familia.hijos} onChange={e => updFam("hijos", parseInt(e.target.value) || 0)} style={inp} />
                     </div>
-                  ))}
+                    {familia.hijos > 0 && (
+                      <div>
+                        <Label tip="Solo cuentan si el hijo correspondiente también falleció (derecho de representación, Art. 1609 CCF).">Nietos (si algún hijo murió)</Label>
+                        <input type="number" min="0" max="30" value={familia.nietos} onChange={e => updFam("nietos", parseInt(e.target.value) || 0)} style={inp} />
+                      </div>
+                    )}
+                  </div>
+                  {familia.hijos === 0 && (
+                    <button onClick={() => { updFam("hijos", 0); updFam("nietos", 0); }} style={{
+                      marginTop: 10, background: "#eef0ff", border: "1.5px solid #c7d4ff",
+                      borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700,
+                      color: "#1847f0", cursor: "default", opacity: 0.7,
+                    }}>
+                      Sin hijos ni nietos — continúa abajo
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 16 }}>
-                <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>🤝 Concubino/a (4° prioridad — si no hay ningún familiar anterior)</p>
-                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <input type="checkbox" checked={familia.concubino} onChange={e => updFam("concubino", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#1847f0", cursor: "pointer" }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#0a0f1e" }}>Había concubino/a</span>
-                  <Tip text="Derechos hereditarios equivalentes al cónyuge si convivieron al menos 2 años o tuvieron hijos en común, sin impedimento para casarse (Art. 1635 CCF)." />
-                </label>
-              </div>
-            </>
-          )}
+                {/* CÓNYUGE — siempre visible */}
+                <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+                  <p style={{ margin: "0 0 12px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>💍 Cónyuge</p>
+                  <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                    <input type="checkbox" checked={familia.conyuge} onChange={e => updFam("conyuge", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#1847f0", cursor: "pointer" }} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#0a0f1e" }}>Había cónyuge al momento del fallecimiento</span>
+                    <Tip text="El cónyuge concurre con hijos (recibe parte igual a un hijo) y con ascendientes (recibe 50%). Sin descendientes ni ascendientes, hereda todo." />
+                  </label>
+                </div>
+
+                {/* ASCENDIENTES — solo si no hay descendientes */}
+                {mostrarAscendientes && (
+                  <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+                    <p style={{ margin: "0 0 4px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>👴 Ascendientes (2° prioridad)</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 11, color: "#888" }}>Aparece porque no hay hijos ni nietos.</p>
+                    <div>
+                      <Label tip="Padre y/o madre del fallecido, vivos al momento del deceso.">Padres vivos</Label>
+                      <input type="number" min="0" max="2" value={familia.padres} onChange={e => updFam("padres", parseInt(e.target.value) || 0)} style={inp} />
+                    </div>
+                    {/* Abuelos — solo si padres = 0 */}
+                    {mostrarAbuelos && (
+                      <div style={{ marginTop: 12 }}>
+                        <Label tip="Solo heredan si los padres también fallecieron.">Abuelos vivos</Label>
+                        <input type="number" min="0" max="4" value={familia.abuelos} onChange={e => updFam("abuelos", parseInt(e.target.value) || 0)} style={inp} />
+                        <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Aparece porque no hay padres vivos.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* COLATERALES — solo si no hay descendientes, ascendientes ni cónyuge */}
+                {mostrarColaterales && (
+                  <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+                    <p style={{ margin: "0 0 4px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>👥 Colaterales (3° prioridad)</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 11, color: "#888" }}>Aparece porque no hay descendientes, ascendientes ni cónyuge.</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                      <div><Label tip="Tienen prioridad sobre sobrinos y tíos.">Hermanos</Label><input type="number" min="0" max="20" value={familia.hermanos} onChange={e => updFam("hermanos", parseInt(e.target.value) || 0)} style={inp} /></div>
+                      {familia.hermanos === 0 && <div><Label tip="Hijos de hermanos fallecidos. Heredan por representación si el hermano murió.">Sobrinos</Label><input type="number" min="0" max="30" value={familia.sobrinos} onChange={e => updFam("sobrinos", parseInt(e.target.value) || 0)} style={inp} /></div>}
+                      {familia.hermanos === 0 && familia.sobrinos === 0 && <div><Label tip="Hermanos de los padres del fallecido. Último grado de colaterales reconocido.">Tíos</Label><input type="number" min="0" max="20" value={familia.tios} onChange={e => updFam("tios", parseInt(e.target.value) || 0)} style={inp} /></div>}
+                    </div>
+                  </div>
+                )}
+
+                {/* CONCUBINO — solo si no hay nadie más */}
+                {mostrarConcubino && (
+                  <div style={{ background: "#f8f9ff", borderRadius: 12, padding: "16px", marginBottom: 16 }}>
+                    <p style={{ margin: "0 0 4px", fontWeight: 800, fontSize: 13, color: "#1847f0" }}>🤝 Concubino/a (4° prioridad)</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 11, color: "#888" }}>Aparece porque no hay ningún otro familiar con derechos hereditarios.</p>
+                    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <input type="checkbox" checked={familia.concubino} onChange={e => updFam("concubino", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#1847f0", cursor: "pointer" }} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#0a0f1e" }}>Había concubino/a</span>
+                      <Tip text="Derechos equivalentes al cónyuge si convivieron al menos 2 años o tuvieron hijos en común, sin impedimento para casarse (Art. 1635 CCF)." />
+                    </label>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {tipo === "testamentaria" && (
             <>
@@ -383,10 +446,35 @@ export default function Herencias() {
               <span style={{ background: "#e8edff", color: "#1847f0", fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 100 }}>{resultado.tipo === "intestamentaria" ? "Sin testamento" : "Con testamento"}</span>
             </div>
 
+            {/* RESUMEN BIENES */}
+            {Object.values(bienesDetalle).some(v => parseFloat(v) > 0) && (
+              <div style={{ background: "#f8f9ff", border: "1.5px solid #e0e4ff", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
+                <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 13, color: "#555" }}>Desglose del patrimonio</p>
+                {CATEGORIAS_BIENES.filter(c => parseFloat(bienesDetalle[c.k]) > 0).map(c => (
+                  <div key={c.k} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                    <span>{c.e} {c.l}</span>
+                    <span style={{ fontWeight: 600 }}>{pesos(parseFloat(bienesDetalle[c.k]))}</span>
+                  </div>
+                ))}
+                <div style={{ borderTop: "1px solid #dde0ff", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14 }}>
+                  <span>Total bruto</span><span style={{ color: "#1847f0" }}>{pesos(bienes)}</span>
+                </div>
+                {parseFloat(deudas) > 0 && (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#c05000", marginTop: 4 }}>
+                      <span>− Deudas</span><span style={{ fontWeight: 600 }}>−{pesos(parseFloat(deudas))}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, marginTop: 4 }}>
+                      <span>Masa hereditaria neta</span><span style={{ color: "#0a7a3a" }}>{pesos(resultado.masa)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <div style={{ background: "linear-gradient(135deg,#1847f0,#4a6fff)", borderRadius: 16, padding: "20px 24px", marginBottom: 20, color: "#fff" }}>
               <p style={{ margin: "0 0 4px", fontSize: 13, opacity: 0.85 }}>Masa hereditaria neta a repartir</p>
-              <p style={{ margin: "0 0 8px", fontSize: "clamp(28px,7vw,44px)", fontWeight: 900, letterSpacing: -1 }}>{pesos(resultado.masa)}</p>
-              {parseFloat(deudas) > 0 && <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>Bienes {pesos(parseFloat(bienes))} − Deudas {pesos(parseFloat(deudas))} = {pesos(resultado.masa)}</p>}
+              <p style={{ margin: 0, fontSize: "clamp(28px,7vw,44px)", fontWeight: 900, letterSpacing: -1 }}>{pesos(resultado.masa)}</p>
             </div>
 
             {resultado.tipo === "intestamentaria" && (
