@@ -125,7 +125,7 @@ export default function Home() {
           </div>
           <div className="navbtns">
             <a href="#calculadoras" className="nav-outline">Ver todas</a>
-            <Link href="/finiquito" className="nav-solid">Calcular ahora</Link>
+            <Link href="/blog" className="nav-solid">Artículos</Link>
           </div>
         </nav>
       </header>
