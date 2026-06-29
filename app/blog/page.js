@@ -1,4 +1,4 @@
-import Link from "next/link";
+use client import Link from "next/link";
 
 export const metadata = {
   title: "Artículos legales y laborales en México | CalculadoraMX",
