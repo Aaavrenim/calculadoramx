@@ -324,21 +324,17 @@ export default function Herencias() {
                       <Label tip="Hijos directos del fallecido, vivos al momento del deceso.">Hijos vivos</Label>
                       <input type="number" min="0" max="20" value={familia.hijos} onChange={e => updFam("hijos", parseInt(e.target.value) || 0)} style={inp} />
                     </div>
-                    {familia.hijos > 0 && (
-                      <div>
-                        <Label tip="Solo cuentan si el hijo correspondiente también falleció (derecho de representación, Art. 1609 CCF).">Nietos (si algún hijo murió)</Label>
-                        <input type="number" min="0" max="30" value={familia.nietos} onChange={e => updFam("nietos", parseInt(e.target.value) || 0)} style={inp} />
-                      </div>
-                    )}
+                    <div>
+                      <Label tip="Nietos del fallecido cuyos padres (hijos del fallecido) también han muerto. Heredan en lugar de su padre/madre fallecido por derecho de representación (Art. 1609 CCF).">
+                        Nietos {familia.hijos === 0 ? "(hijos del fallecido murieron)" : "(si algún hijo murió)"}
+                      </Label>
+                      <input type="number" min="0" max="30" value={familia.nietos} onChange={e => updFam("nietos", parseInt(e.target.value) || 0)} style={inp} />
+                    </div>
                   </div>
-                  {familia.hijos === 0 && (
-                    <button onClick={() => { updFam("hijos", 0); updFam("nietos", 0); }} style={{
-                      marginTop: 10, background: "#eef0ff", border: "1.5px solid #c7d4ff",
-                      borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700,
-                      color: "#1847f0", cursor: "default", opacity: 0.7,
-                    }}>
-                      Sin hijos ni nietos — continúa abajo
-                    </button>
+                  {familia.hijos === 0 && familia.nietos === 0 && (
+                    <p style={{ margin: "10px 0 0", fontSize: 12, color: "#888", fontStyle: "italic" }}>
+                      Sin hijos ni nietos — continúa con las siguientes secciones.
+                    </p>
                   )}
                 </div>
 
